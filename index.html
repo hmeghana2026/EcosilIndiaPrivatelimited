@@ -146,7 +146,7 @@ h2 .green{color:var(--green)}
 /* PROCESS */
 #process{background:var(--navy);overflow:hidden}
 .process-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:64px;position:relative}
-.process-flow::before{content:'';position:absolute;top:38px;left:calc(12.5% + 20px);right:calc(12.5% + 20px);height:1px;background:linear-gradient(90deg,var(--green),var(--gold));z-index:0}
+.process-flow::before{display:none}
 .step{text-align:center;position:relative;padding:0 20px}
 .step-num{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;position:relative;z-index:1;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:28px;transition:transform 0.3s}
 .step:nth-child(1) .step-num{background:rgba(34,197,94,0.15);border:2px solid var(--green);color:var(--green)}
@@ -812,26 +812,26 @@ footer{background:#060A14;border-top:1px solid rgba(255,255,255,0.06);padding:60
         <div class="form-row">
           <div class="form-group">
             <label>Full Name *</label>
-            <input type="text" placeholder="Your name" required>
+            <input type="text" id="f-name" placeholder="Your name" required>
           </div>
           <div class="form-group">
             <label>Company *</label>
-            <input type="text" placeholder="Company name" required>
+            <input type="text" id="f-company" placeholder="Company name" required>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Country *</label>
-            <input type="text" placeholder="Country" required>
+            <input type="text" id="f-country" placeholder="Country" required>
           </div>
           <div class="form-group">
             <label>Phone / WhatsApp</label>
-            <input type="tel" placeholder="+1 234 567 8900">
+            <input type="tel" id="f-phone" placeholder="+91 XXXXX XXXXX">
           </div>
         </div>
         <div class="form-group">
           <label>Product of Interest *</label>
-          <select required>
+          <select id="f-product" required>
             <option value="">Select a product</option>
             <option>High Purity Silica</option>
             <option>Calcium Carbonate</option>
@@ -841,7 +841,7 @@ footer{background:#060A14;border-top:1px solid rgba(255,255,255,0.06);padding:60
         </div>
         <div class="form-group">
           <label>Volume Required (MT/month)</label>
-          <select>
+          <select id="f-volume">
             <option value="">Select estimated volume</option>
             <option>Under 10 MT/month</option>
             <option>10 – 50 MT/month</option>
@@ -851,7 +851,7 @@ footer{background:#060A14;border-top:1px solid rgba(255,255,255,0.06);padding:60
         </div>
         <div class="form-group">
           <label>Message</label>
-          <textarea placeholder="Tell us about your application, purity requirements, or any technical specifications..."></textarea>
+          <textarea id="f-message" placeholder="Tell us about your application, purity requirements, or any technical specifications..."></textarea>
         </div>
         <button type="submit" class="form-submit">Start Your Supply Conversation →</button>
       </form>
@@ -907,7 +907,7 @@ footer{background:#060A14;border-top:1px solid rgba(255,255,255,0.06);padding:60
   </div>
 </footer>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // Navbar scroll
 window.addEventListener('scroll',()=>{
   document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>50)
@@ -919,18 +919,45 @@ const observer=new IntersectionObserver((entries)=>{
 },{threshold:0.1,rootMargin:'0px 0px -60px 0px'})
 document.querySelectorAll('.fade-up').forEach(el=>observer.observe(el))
 
-// Form handler
+// Form handler — submits to Google Sheets
 function handleSubmit(e){
   e.preventDefault()
-  const btn=e.target.querySelector('.form-submit')
-  btn.textContent='✓ Message Sent — We\'ll Be in Touch'
-  btn.style.background='linear-gradient(135deg,#22C55E,#166534)'
-  btn.style.color='#fff'
-  setTimeout(()=>{
-    btn.textContent='Start Your Supply Conversation →'
-    btn.style.background=''
-    btn.style.color=''
-  },4000)
+  const btn = e.target.querySelector('.form-submit')
+  btn.textContent = 'Sending...'
+  btn.disabled = true
+
+  const data = {
+    name:    document.getElementById('f-name').value,
+    company: document.getElementById('f-company').value,
+    country: document.getElementById('f-country').value,
+    phone:   document.getElementById('f-phone').value,
+    product: document.getElementById('f-product').value,
+    volume:  document.getElementById('f-volume').value,
+    message: document.getElementById('f-message').value
+  }
+
+  fetch('https://script.google.com/macros/s/AKfycbyyLhncUtH6JTkEome8Ipr3jrlDnCwbLeY7TZpRe8pQCw8GjU5tRpmZBr7wdx7a9ikDbA/exec', {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(() => {
+    btn.textContent = '✓ Message Sent — We\'ll Be in Touch'
+    btn.style.background = 'linear-gradient(135deg,#22C55E,#166534)'
+    btn.style.color = '#fff'
+    e.target.reset()
+    setTimeout(() => {
+      btn.textContent = 'Start Your Supply Conversation →'
+      btn.style.background = ''
+      btn.style.color = ''
+      btn.disabled = false
+    }, 4000)
+  }).catch(() => {
+    btn.textContent = '✗ Something went wrong — please try again'
+    btn.style.background = 'linear-gradient(135deg,#ef4444,#b91c1c)'
+    btn.style.color = '#fff'
+    btn.disabled = false
+  })
 }
 
 // Counter animation
