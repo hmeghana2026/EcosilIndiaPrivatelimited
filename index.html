@@ -133,6 +133,10 @@ h2 .green{color:var(--green)}
 .spec-pill{background:rgba(33,32,27,0.05);border:1px solid rgba(33,32,27,0.1);border-radius:4px;padding:5px 10px;font-size:11px;color:var(--muted);letter-spacing:0.5px}
 
 /* INDUSTRIES */
+.spec-tab{background:var(--card2);border:1px solid var(--border);border-bottom:none;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:600;letter-spacing:1px;text-transform:uppercase;font-size:13px;padding:12px 20px;cursor:pointer;border-radius:6px 6px 0 0;position:relative;top:1px}
+.spec-tab.active{background:var(--card);color:var(--white);border-bottom:1px solid var(--card)}
+.spec-tab:hover{color:var(--white)}
+
 #industries{background:var(--dark)}
 .industries-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:56px}
 .industry-card{background:var(--card);border:1px solid rgba(33,32,27,0.08);border-radius:10px;padding:28px 22px;transition:all 0.3s;position:relative;overflow:hidden}
@@ -628,6 +632,42 @@ footer{background:var(--dark);border-top:1px solid rgba(33,32,27,0.08);padding:6
   </div>
 </section>
 
+<!-- SILICA SPECIFICATIONS -->
+<section id="specs" style="background:var(--dark)">
+  <div class="section-inner fade-up">
+    <div class="section-tag">Grades &amp; Specifications</div>
+    <h2>Precipitated Silica <span class="accent">Spec Sheet</span></h2>
+    <p class="section-lead" style="margin-bottom:28px">Physio-chemical properties by grade family, with the test method for every parameter.</p>
+
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:28px;font-size:13px;line-height:1.6;color:var(--muted)">
+      <strong style="color:var(--white)">Every batch is verified against its own Certificate of Analysis (COA)</strong> before dispatch. The figures below are typical values by grade — your shipment's COA is the reference document for that specific lot.
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;gap:8px">
+        <button class="spec-tab active" data-tab="g" onclick="showSpecTab('g')">Conventional (G)</button>
+        <button class="spec-tab" data-tab="hds" onclick="showSpecTab('hds')">Highly Dispersible (HDS-G)</button>
+      </div>
+      <a href="ecosil-precipitated-silica-pearl-grade-spec-sheet.pdf" download style="display:inline-flex;align-items:center;gap:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:13px;color:var(--gold);padding-bottom:12px;text-decoration:none">⬇ Download Spec Sheet (PDF)</a>
+    </div>
+
+    <div id="specTableWrap" style="overflow-x:auto;background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:0">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:560px">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:12px 16px;font-weight:600;color:var(--white)">Parameter</th>
+            <th style="text-align:left;padding:12px 16px;font-weight:600;color:var(--white)">Unit</th>
+            <th style="text-align:left;padding:12px 16px;font-weight:600;color:var(--white)">Typical Value</th>
+            <th style="text-align:left;padding:12px 16px;font-weight:600;color:var(--white)">Method</th>
+          </tr>
+        </thead>
+        <tbody id="specTableBody" style="color:var(--muted)"></tbody>
+      </table>
+    </div>
+    <p id="specLegend" style="font-size:11px;color:var(--muted);margin-top:14px"></p>
+  </div>
+</section>
+
 <!-- INDUSTRIES -->
 <section id="industries">
   <div class="fade-up">
@@ -915,6 +955,63 @@ footer{background:var(--dark);border-top:1px solid rgba(33,32,27,0.08);padding:6
 </footer>
 
 <script>
+// Silica spec table data. HDS-G figures are sourced from the current product brochure.
+const specData = {
+  g: [
+    ['Appearance', '–', 'White, granular', 'Visual'],
+    ['Bulk density', 'g/l', '330', 'ISO 787-11'],
+    ['pH (5% slurry)', '–', '6.5', 'ISO 787-9'],
+    ['Moisture', '%', '5.5', 'ISO 787-2'],
+    ['Soluble salts, max', '%', '1.0', 'ISO 787-13'],
+    ['BET surface area', 'm²/g', '180', 'ISO 9277'],
+    ['CTAB surface area', 'm²/g', '165', 'ISO 5794-1']
+  ],
+  hds: [
+    ['Silicon dioxide (SiO₂) purity', '% w/w', '98', 'ISO 3262-19'],
+    ['BET specific surface area', 'm²/g', '176 – 183', 'ISO 9277'],
+    ['CTAB surface area', 'm²/g', '134 – 144', 'ISO 5794-1'],
+    ['BET / CTAB ratio (structure openness)', '–', '1.2', 'Calculated'],
+    ['Moisture', '% w/w', '5 – 7', 'ISO 787-2'],
+    ['pH, aqueous suspension', '–', '5.0 – 7.5', 'ISO 787-9'],
+    ['Bulk density', 'g/l', '213', 'ISO 787-11'],
+    ['Tapped density', 'g/l', '234', 'ISO 787-11'],
+    ['Whiteness', '%', '> 95', 'ISO 787-25']
+  ]
+}
+const specLegends = {
+  g: 'Methods: ISO 787-2 (Moisture) · ISO 787-9 (pH) · ISO 787-11 (Bulk Density) · ISO 787-13 (Soluble Salts) · ISO 9277 (BET) · ISO 5794-1 (CTAB).',
+  hds: 'Methods: ISO 3262-19 (SiO₂ purity) · ISO 9277 (BET) · ISO 5794-1 (CTAB) · ISO 787-2 (Moisture) · ISO 787-9 (pH) · ISO 787-11 (Bulk/Tapped Density) · ISO 787-25 (Whiteness).'
+}
+function renderSpecTab(key){
+  const rows = specData[key]
+  const wrap = document.getElementById('specTableWrap')
+  const legend = document.getElementById('specLegend')
+  wrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:560px">
+    <thead>
+      <tr style="border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:12px 16px;font-weight:600;color:var(--white)">Parameter</th>
+        <th style="text-align:left;padding:12px 16px;font-weight:600;color:var(--white)">Unit</th>
+        <th style="text-align:left;padding:12px 16px;font-weight:600;color:var(--white)">Typical Value</th>
+        <th style="text-align:left;padding:12px 16px;font-weight:600;color:var(--white)">Method</th>
+      </tr>
+    </thead>
+    <tbody style="color:var(--muted)">
+      ${rows.map(r => `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:9px 16px">${r[0]}</td>
+        <td style="padding:9px 16px">${r[1]}</td>
+        <td style="padding:9px 16px;color:var(--white);font-weight:600">${r[2]}</td>
+        <td style="padding:9px 16px">${r[3]}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`
+  legend.textContent = specLegends[key]
+}
+function showSpecTab(key){
+  document.querySelectorAll('.spec-tab').forEach(btn=>btn.classList.toggle('active', btn.dataset.tab===key))
+  renderSpecTab(key)
+}
+renderSpecTab('g')
+
 // Navbar scroll
 window.addEventListener('scroll',()=>{
   document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>50)
